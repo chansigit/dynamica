@@ -75,6 +75,7 @@ class DynVelocity(nn.Module):
         
         # Predict velocities for physical positions
         n_scalars = hidden_dim*2 if self.pos_autonomous else hidden_dim*2 + 1
+        
         self.pos_head = E3NNVelocityPredictor(n_scalars=n_scalars, n_vec3d=1, scalar_hidden=128, vec3d_hidden=128, n_vec3d_out=1)
 
         self.apply(self._init_weights)
@@ -99,15 +100,23 @@ class DynVelocity(nn.Module):
         # Predict velocities for expressions (in latent space)
 
         if not self.expr_autonomous:
-            H = torch.cat([H, t.expand(H.size(0), 1)], dim=1)
-        feature_velo = self.expr_head(H)
+            H_e = torch.cat([H, t.expand(H.size(0), 1)], dim=1)
+            feature_velo = self.expr_head(H_e)
+        else:
+            feature_velo = self.expr_head(H)
 
         if self.static_pos:
             pos_velo = torch.zeros_like(P)
         else:
-            pos_velo = self.velocity_head.forward(
-                self.velocity_head.prepare_input(H, P.reshape(-1, 3))
-            )
+            if not self.pos_autonomous:
+                H_p = torch.cat([H, t.expand(H.size(0), 1)], dim=1)
+                pos_velo = self.pos_head.forward(
+                    self.pos_head.prepare_input(H_p, P.reshape(-1, 3))
+                )
+            else:
+                pos_velo = self.pos_head.forward(
+                    self.pos_head.prepare_input(H, P.reshape(-1, 3))
+                )
 
         # concatenate velocities
         dynamics = torch.concat([feature_velo, pos_velo], axis=1)
