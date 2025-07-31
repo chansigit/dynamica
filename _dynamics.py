@@ -5,6 +5,7 @@ from emlp.groups import SO
 from emlp.reps import T, V
 from .attention import SpatialAttentionLayer
 
+# to be deprecated
 class DynVelocity(nn.Module):
     feature_dim: int = 30
     position_dim: int = 3
