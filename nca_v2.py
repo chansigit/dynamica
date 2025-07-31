@@ -7,8 +7,6 @@ from .sat import SpatialAttentionLayer
 from .equi import E3NNVelocityPredictor
 
 
-
-
 class DynVelocity(nn.Module):
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
